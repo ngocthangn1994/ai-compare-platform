@@ -5,7 +5,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="container-shell flex h-16 items-center justify-between">
         <Link href="/" className="text-lg font-semibold text-slate-900">
-          ReliaCompare AI
+          Brainbattle AI
         </Link>
         <nav className="flex items-center gap-6 text-sm font-medium text-slate-600">
           <Link href="/compare" className="hover:text-slate-900">

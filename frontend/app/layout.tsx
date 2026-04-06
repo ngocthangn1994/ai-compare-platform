@@ -3,7 +3,7 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 
 export const metadata: Metadata = {
-  title: 'ReliaCompare AI',
+  title: 'BrainbattleAI',
   description: 'AI Comparison + Reliability Scoring Platform'
 };
 
