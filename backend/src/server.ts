@@ -7,10 +7,15 @@ import historyRouter from './routes/historyRoutes';
 import transcribeRouter from './routes/transcribeRoutes';
 
 const app = express();
+const PORT = env.port || 5001;
 
 app.use(
   cors({
-    origin: true,
+    origin: [
+      'http://localhost:3000',
+      'https://brainbattleai.com',
+      'https://www.brainbattleai.com'
+    ],
     credentials: true
   })
 );
@@ -56,8 +61,8 @@ async function bootstrap(): Promise<void> {
 
   await mongoose.connect(env.mongoUri);
 
-  app.listen(env.port, () => {
-    console.log(`Backend running on http://localhost:${env.port}`);
+  app.listen(PORT, () => {
+    console.log(`Backend running on port ${PORT}`);
   });
 }
 
