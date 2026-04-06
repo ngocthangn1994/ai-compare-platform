@@ -10,6 +10,13 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'AI Comparison Backend is running'
+  });
+});
+
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', service: 'ai-comparison-backend' });
 });
