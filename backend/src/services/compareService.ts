@@ -1,5 +1,9 @@
 import { MODEL_CONFIGS } from '../config/models';
-import { calculateOverallScore, generateScoreBreakdown, ScoreBreakdown } from './scoringService';
+import {
+  calculateOverallScore,
+  generateScoreBreakdown,
+  ScoreBreakdown
+} from './scoringService';
 import { queryOpenAI } from './providers/openaiService';
 import { queryAnthropic } from './providers/anthropicService';
 import { queryXai } from './providers/xaiService';
@@ -17,7 +21,11 @@ export type NormalizedResult = {
   error?: string;
 };
 
-async function queryProvider(prompt: string, modelId: string): Promise<NormalizedResult> {
+type ComparisonInput = {
+  prompt: string;
+};
+
+async function queryProvider(input: ComparisonInput, modelId: string): Promise<NormalizedResult> {
   const modelConfig = MODEL_CONFIGS.find((model) => model.id === modelId);
 
   if (!modelConfig) {
@@ -29,26 +37,30 @@ async function queryProvider(prompt: string, modelId: string): Promise<Normalize
   }
 
   const startedAt = Date.now();
+  const finalPrompt = input.prompt.trim();
 
   try {
     let content = '';
 
     if (modelConfig.providerType === 'openai') {
-      content = await queryOpenAI(prompt, modelConfig.apiModel!);
+      content = await queryOpenAI(finalPrompt, modelConfig.apiModel!);
     } else if (modelConfig.providerType === 'anthropic') {
-      content = await queryAnthropic(prompt, modelConfig.apiModel!);
+      content = await queryAnthropic(finalPrompt, modelConfig.apiModel!);
     } else if (modelConfig.providerType === 'xai') {
-      content = await queryXai(prompt, modelConfig.apiModel!);
+      content = await queryXai(finalPrompt, modelConfig.apiModel!);
+    } else {
+      throw new Error(`Unsupported provider type: ${modelConfig.providerType}`);
     }
 
     const latencyMs = Date.now() - startedAt;
-    const scoreBreakdown = generateScoreBreakdown(prompt, content);
+    const safeContent = content?.trim() || 'No response returned.';
+    const scoreBreakdown = generateScoreBreakdown(finalPrompt, safeContent);
 
     return {
       provider: modelConfig.provider,
       model: modelConfig.name,
       modelId,
-      content,
+      content: safeContent,
       latencyMs,
       scoreBreakdown,
       overallScore: calculateOverallScore(scoreBreakdown),
@@ -56,7 +68,8 @@ async function queryProvider(prompt: string, modelId: string): Promise<Normalize
     };
   } catch (error) {
     const latencyMs = Date.now() - startedAt;
-    const fallbackScores = {
+
+    const fallbackScores: ScoreBreakdown = {
       relevance: 1,
       clarity: 1,
       completeness: 1,
@@ -78,12 +91,29 @@ async function queryProvider(prompt: string, modelId: string): Promise<Normalize
   }
 }
 
-export async function runComparison(prompt: string, modelIds: string[]): Promise<NormalizedResult[]> {
+export async function runComparison(
+  prompt: string,
+  modelIds: string[]
+): Promise<NormalizedResult[]> {
+  const finalPrompt = prompt.trim();
+
+  if (!finalPrompt) {
+    throw new Error('Prompt cannot be empty.');
+  }
+
   const enabledModels = modelIds.filter((modelId) => {
     const modelConfig = MODEL_CONFIGS.find((model) => model.id === modelId);
-    return Boolean(modelConfig?.enabled);
+    return Boolean(modelConfig?.enabled && modelConfig.providerType !== 'coming-soon');
   });
 
-  const tasks = enabledModels.map((modelId) => queryProvider(prompt, modelId));
+  if (enabledModels.length === 0) {
+    throw new Error('No enabled models were selected.');
+  }
+
+  const input: ComparisonInput = {
+    prompt: finalPrompt
+  };
+
+  const tasks = enabledModels.map((modelId) => queryProvider(input, modelId));
   return Promise.all(tasks);
 }

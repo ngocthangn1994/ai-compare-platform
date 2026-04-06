@@ -4,11 +4,19 @@ import mongoose from 'mongoose';
 import { env } from './config/env';
 import compareRouter from './routes/compareRoutes';
 import historyRouter from './routes/historyRoutes';
+import transcribeRouter from './routes/transcribeRoutes';
 
 const app = express();
 
-app.use(cors());
-app.use(express.json({ limit: '1mb' }));
+app.use(
+  cors({
+    origin: true,
+    credentials: true
+  })
+);
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (_req, res) => {
   res.status(200).json({
@@ -18,11 +26,28 @@ app.get('/', (_req, res) => {
 });
 
 app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', service: 'ai-comparison-backend' });
+  res.status(200).json({
+    status: 'ok',
+    service: 'ai-comparison-backend'
+  });
 });
 
 app.use('/api', compareRouter);
 app.use('/api', historyRouter);
+app.use('/api', transcribeRouter);
+
+app.use(
+  (
+    error: Error,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction
+  ) => {
+    res.status(500).json({
+      message: error.message || 'Internal server error'
+    });
+  }
+);
 
 async function bootstrap(): Promise<void> {
   if (!env.mongoUri) {
