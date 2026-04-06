@@ -1,6 +1,7 @@
 import { CompareResult } from '@/types';
 import ScoreBadge from './ScoreBadge';
 import WinnerBadge from './WinnerBadge';
+import ReactMarkdown from 'react-markdown';
 
 type ResultCardProps = {
   result: CompareResult;
@@ -8,14 +9,14 @@ type ResultCardProps = {
 
 export default function ResultCard({ result }: ResultCardProps) {
   return (
-    <article className="h-full rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
       {/* Header */}
       <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold text-slate-900">
+          <h3 className="truncate text-lg font-semibold text-slate-900">
             {result.model}
           </h3>
-          <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">
+          <p className="mt-1 text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
             {result.provider}
           </p>
         </div>
@@ -31,16 +32,16 @@ export default function ResultCard({ result }: ResultCardProps) {
       </div>
 
       {/* Answer Content */}
-      <div className="px-5 py-4">
+      <div className="flex-1 px-5 py-4">
         {result.error ? (
           <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-700">
             {result.error}
           </div>
         ) : (
-          <div className="rounded-xl bg-slate-50 px-4 py-4">
-            <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
-              {result.content}
-            </p>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
+            <div className="prose prose-sm max-w-none text-slate-700 prose-headings:text-slate-900 prose-strong:text-slate-900 prose-p:leading-7 prose-li:leading-7">
+              <ReactMarkdown>{formatAiText(result.content)}</ReactMarkdown>
+            </div>
           </div>
         )}
       </div>
@@ -75,4 +76,10 @@ function StatItem({ label, value }: { label: string; value: number }) {
       <p className="mt-1 text-sm font-semibold text-slate-800">{value}</p>
     </div>
   );
+}
+
+function formatAiText(text: string) {
+  return text
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n');
 }
